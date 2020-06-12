@@ -1,0 +1,25 @@
+func insert(root *node, data string) *node {
+	// if root == nil {
+	// 	return
+	// }
+	if root == nil {
+		fmt.Println("call", data)
+		root = newNode(data)
+		fmt.Println(root)
+	} else if compareRoutes(data, root.data) {
+		root.left = insert(root.left, data)
+		// if root.left == nil {
+		// 	root.left = newNode(data)
+		// } else {
+		// 	insert(root.left, data)
+		// }
+	} else {
+		root.right = insert(root.right, data)
+		// if root.right == nil {
+		// 	root.right = newNode(data)
+		// } else {
+		// 	insert(root.right, data)
+		// }
+	}
+	return root
+}
