@@ -2,6 +2,7 @@ package sinister
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -66,11 +67,25 @@ func (l *Lib) Query(key string) string {
 
 type ParamValue string
 
-func (p ParamValue) Int() int {
+func (p ParamValue) Int() (int, error) {
 	n, err := strconv.Atoi(string(p))
 	if err != nil {
+		return 0, errors.New("sinister: conversion failed")
 	}
-	return n
+	return n, nil
+}
+func (p ParamValue) Int64() (int64, error) {
+	n, err := strconv.Atoi(string(p))
+	if err != nil {
+		return 0, errors.New("sinister: conversion failed")
+	}
+	return n, nil
+}
+func (p ParamValue) String() string {
+	return string(p)
+}
+func (p ParamValue) Bytes() []byte {
+	return []byte(p)
 }
 
 func (l *Lib) Param(param string) ParamValue {
@@ -90,7 +105,7 @@ type Route struct {
 	RawPath string
 	Method  string
 	Handler Handler
-	params  []*param
+	params  []string
 }
 type Router struct {
 	Routes []*Route
@@ -109,9 +124,9 @@ func NewRouter() *Router {
 }
 
 func (r *Router) Get(name, path string, h Handler) {
-	pParams, fPath := validatePath(path)
+	params, fPath := validatePath(path)
 	fmt.Println("validatePath", pParams, fPath)
-	r1 := NewRoute(name, path, fPath, http.MethodGet, h, pParams)
+	r1 := NewRoute(name, path, fPath, http.MethodGet, h, params)
 	r.Node = insert(r.Node, r1)
 }
 
@@ -125,7 +140,7 @@ type Param struct {
 	Value string
 }
 
-func NewRoute(name, path, rawPath, method string, h Handler, params []*param) *Route {
+func NewRoute(name, path, rawPath, method string, h Handler, params []string) *Route {
 	return &Route{
 		Name:    name,
 		Path:    path,
@@ -136,14 +151,14 @@ func NewRoute(name, path, rawPath, method string, h Handler, params []*param) *R
 	}
 }
 
-func setParams(params []*param, values []string) []*Param {
+func setParams(params []string, values []string) []*Param {
 	if len(params) == 0 || len(params) != len(values) {
 		return nil
 	}
 	rp := make([]*Param, len(params))
 	t := &Param{}
 	for i, p := range params {
-		t = &Param{Name: p.name, Value: values[i]}
+		t = &Param{Name: p, Value: values[i]}
 		rp[i] = t
 	}
 	return rp
