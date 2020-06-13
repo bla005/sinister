@@ -79,7 +79,8 @@ func (p ParamValue) Int64() (*int64, error) {
 	if err != nil {
 		return nil, ErrInvalidParam
 	}
-	return &(int64(n)), nil
+	m := int64(n)
+	return &m, nil
 }
 func (p ParamValue) String() string {
 	return string(p)
