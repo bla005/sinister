@@ -100,6 +100,7 @@ func validatePath(path string) ([]string, string) {
 				slashIdx = i
 			}
 			// search for first left bracket
+			//
 			if c == LeftSquareBracket && !isBracketOpen {
 				if i-slashIdx != 1 {
 					// if the char before the left bracket is not a slash
