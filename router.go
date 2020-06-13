@@ -67,17 +67,17 @@ func (l *Lib) Query(key string) string {
 
 type ParamValue string
 
-func (p ParamValue) Int() (int, error) {
+func (p ParamValue) Int() (*int, error) {
 	n, err := strconv.Atoi(string(p))
 	if err != nil {
-		return 0, errors.New("sinister: conversion failed")
+		return nil, ErrInvalidParam
 	}
 	return n, nil
 }
-func (p ParamValue) Int64() (int64, error) {
+func (p ParamValue) Int64() (*int64, error) {
 	n, err := strconv.Atoi(string(p))
 	if err != nil {
-		return 0, errors.New("sinister: conversion failed")
+		return nil, ErrInvalidParam
 	}
 	return int64(n), nil
 }
@@ -87,6 +87,10 @@ func (p ParamValue) String() string {
 func (p ParamValue) Bytes() []byte {
 	return []byte(p)
 }
+
+var (
+	ErrInvalidParam = errors.New("lol")
+)
 
 func (l *Lib) Param(param string) ParamValue {
 	if len(l.params) == 0 {
