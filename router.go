@@ -72,14 +72,14 @@ func (p ParamValue) Int() (*int, error) {
 	if err != nil {
 		return nil, ErrInvalidParam
 	}
-	return n, nil
+	return &n, nil
 }
 func (p ParamValue) Int64() (*int64, error) {
 	n, err := strconv.Atoi(string(p))
 	if err != nil {
 		return nil, ErrInvalidParam
 	}
-	return int64(n), nil
+	return &int64(n), nil
 }
 func (p ParamValue) String() string {
 	return string(p)
