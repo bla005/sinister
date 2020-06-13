@@ -116,7 +116,7 @@ func validatePath(path string) ([]string, string) {
 			} else if isBracketOpen && i-leftBracketIdx > 1 && c == RightSquareBracket {
 				// if left bracket exists and we passed at least one char and the current char is a right bracket param is valid
 				rightBracketIdx = i
-				r = append(r, path[leftBracketIdx+1:rightBracketIdx])
+				params = append(r, path[leftBracketIdx+1:rightBracketIdx])
 				// params = append(params, &param{name: path[leftBracketIdx+1 : rightBracketIdx], pos: leftBracketIdx + 1})
 				if nPath.Len() > 0 {
 					nPath.WriteString("#")

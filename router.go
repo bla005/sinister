@@ -79,7 +79,7 @@ func (p ParamValue) Int64() (int64, error) {
 	if err != nil {
 		return 0, errors.New("sinister: conversion failed")
 	}
-	return n, nil
+	return int64(n), nil
 }
 func (p ParamValue) String() string {
 	return string(p)
@@ -125,7 +125,7 @@ func NewRouter() *Router {
 
 func (r *Router) Get(name, path string, h Handler) {
 	params, fPath := validatePath(path)
-	fmt.Println("validatePath", pParams, fPath)
+	fmt.Println("validatePath", params, fPath)
 	r1 := NewRoute(name, path, fPath, http.MethodGet, h, params)
 	r.Node = insert(r.Node, r1)
 }
