@@ -154,17 +154,17 @@ func formatReqPath(path string) (string, []string, bool) {
 	}
 	digit := 0
 	found := false
-	slash := 0
+	slashIndex := 0
 	n := 0
 	r := strings.Builder{}
 	p := []string{}
 	for i, c := range path {
 		if isRuneValidV2(c) {
 			if c == slash {
-				if c == slash && i-slash == 1 {
+				if c == slash && i-slashIndex == 1 {
 					return "", []string{}, false
 				}
-				slash = i
+				slashIndex = i
 			}
 			if found {
 				if c == slash {
