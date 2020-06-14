@@ -130,6 +130,7 @@ type Route struct {
 	Method  string
 	Handler Handler
 	params  []string
+	encoded int
 }
 type Router struct {
 	Routes []*Route
@@ -148,9 +149,9 @@ func NewRouter() *Router {
 }
 
 func (r *Router) Get(name, path string, h Handler) {
-	params, formattedPath := validatePath(path)
+	params, formattedPath, encoded := validatePath(path)
 	fmt.Println("validatePath", params, formattedPath)
-	r1 := NewRoute(name, path, formattedPath, http.MethodGet, h, params)
+	r1 := NewRoute(name, path, formattedPath, http.MethodGet, h, params, encoded)
 	r.Node = insert(r.Node, r1)
 }
 
@@ -164,7 +165,7 @@ type Param struct {
 	Value string
 }
 
-func NewRoute(name, path, rawPath, method string, h Handler, params []string) *Route {
+func NewRoute(name, path, rawPath, method string, h Handler, params []string, encoded int) *Route {
 	return &Route{
 		Name:    name,
 		Path:    path,
@@ -172,6 +173,7 @@ func NewRoute(name, path, rawPath, method string, h Handler, params []string) *R
 		Method:  method,
 		Handler: h,
 		params:  params,
+		encoded: encoded,
 	}
 }
 
@@ -190,11 +192,12 @@ func setParams(params []string, values []string) []*Param {
 
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("request path", r.URL.Path)
-	formattedPath, params, valid := formatReqPath(r.URL.Path)
+	formattedPath, params, encoded, valid := formatReqPath(r.URL.Path)
 	if valid {
 		fmt.Println("valid request url", r.URL.Path)
 		// fPath, pParams := formatRequestPath(r.URL.Path)
-		route := findNode(router.Node, formattedPath)
+		// route := findNode(router.Node, formattedPath)
+		route := findNode(router.Node, encoded)
 		fmt.Println("findNode", route)
 		if route != nil && isMatch(route.RawPath, formattedPath) {
 			ep := setParams(route.params, params)

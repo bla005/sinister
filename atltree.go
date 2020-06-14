@@ -55,27 +55,28 @@ func insert(n *node, data *Route) *node {
 	if n == nil {
 		fmt.Println("was nil", data)
 		n = newNode(data)
-	} else if (data.RawPath[0] < n.data.RawPath[0]) && (data.RawPath != n.data.RawPath) {
+		// } else if (data.RawPath[0] < n.data.RawPath[0]) && (data.RawPath != n.data.RawPath) {
+	} else if data.encoded < n.data.encoded {
 		fmt.Println("left", data)
 		n.left = insert(n.left, data)
-	} else if (data.RawPath[0] > n.data.RawPath[0]) && (data.RawPath != n.data.RawPath) {
+	} else if data.encoded > n.data.encoded {
 		fmt.Println("right", data)
 		n.right = insert(n.right, data)
 	}
 	n.height = max(height(n.left), height(n.right)) + 1
 	balance := getBalance(n)
 
-	if balance > 1 && data.RawPath[0] < n.left.data.RawPath[0] {
+	if balance > 1 && data.encoded < n.left.data.encoded {
 		return rightRotate(n)
 	}
-	if balance < -1 && data.RawPath[0] > n.right.data.RawPath[0] {
+	if balance < -1 && data.encoded > n.right.data.encoded {
 		return leftRotate(n)
 	}
-	if balance > 1 && data.RawPath[0] > n.left.data.RawPath[0] {
+	if balance > 1 && data.encoded > n.left.data.encoded {
 		n.left = leftRotate(n.left)
 		return rightRotate(n)
 	}
-	if balance < -1 && data.RawPath[0] > n.right.data.RawPath[0] {
+	if balance < -1 && data.encoded > n.right.data.encoded {
 		n.right = rightRotate(n.right)
 		return leftRotate(n)
 	}
@@ -110,13 +111,13 @@ func getBalance(n *node) int {
 	return height(n.left) - height(n.right)
 }
 
-func findNode(n *node, target string) *Route {
+func findNode(n *node, target int) *Route {
 	if n == nil {
 		return nil
 	}
-	if n.data.RawPath == target {
+	if n.data.encoded == target {
 		return n.data
-	} else if target[0] < n.data.RawPath[0] {
+	} else if target < n.data.encoded {
 		return findNode(n.left, target)
 	} else {
 		return findNode(n.right, target)
