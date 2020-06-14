@@ -33,7 +33,7 @@ func NewLib(w http.ResponseWriter, r *http.Request, logger *zap.Logger) *Lib {
 	return &Lib{
 		w:      w,
 		r:      r,
-		logger: nil,
+		logger: logger,
 		params: make([]*Param, 0),
 	}
 }
@@ -43,22 +43,43 @@ type httpResponse struct {
 	Msg  string `json:"msg"`
 }
 
+func (l *Lib) String(code int, msg string) {
+	_, err := l.w.Write([]byte(msg))
+	if err != nil {
+		http.Error(l.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
+func (l *Lib) Log(msg string) {
+}
+
 func (l *Lib) JSON(code int, msg string) {
 	r := &httpResponse{code, msg}
+	l.w.WriteHeader(code)
 	if err := json.NewEncoder(l.w).Encode(r); err != nil {
 		http.Error(l.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 }
-func (l *Lib) set(w http.ResponseWriter, r *http.Request, params []*Param) {
+func (l *Lib) JSONv2(code int, data interface{}) {
+	l.w.WriteHeader(code)
+	if err := json.NewEncoder(l.w).Encode(data); err != nil {
+		http.Error(l.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (l *Lib) set(w http.ResponseWriter, r *http.Request, logger *zap.Logger, params []*Param) {
 	l.w = w
 	l.r = r
+	l.logger = logger
 	l.params = params
 }
 
 func (l *Lib) reset() {
 	l.w = nil
 	l.r = nil
+	l.logger = nil
 	l.params = nil
 }
 func (l *Lib) Query(key string) string {
@@ -67,20 +88,20 @@ func (l *Lib) Query(key string) string {
 
 type ParamValue string
 
-func (p ParamValue) Int() (*int, error) {
+func (p ParamValue) Int() (int, error) {
 	n, err := strconv.Atoi(string(p))
 	if err != nil {
-		return nil, ErrInvalidParam
+		return 0, ErrInvalidParam
 	}
-	return &n, nil
+	return n, nil
 }
-func (p ParamValue) Int64() (*int64, error) {
+func (p ParamValue) Int64() (int64, error) {
 	n, err := strconv.Atoi(string(p))
 	if err != nil {
-		return nil, ErrInvalidParam
+		return 0, ErrInvalidParam
 	}
 	m := int64(n)
-	return &m, nil
+	return m, nil
 }
 func (p ParamValue) String() string {
 	return string(p)
@@ -90,7 +111,7 @@ func (p ParamValue) Bytes() []byte {
 }
 
 var (
-	ErrInvalidParam = errors.New("lol")
+	ErrInvalidParam = errors.New("sinister: invalid param")
 )
 
 func (l *Lib) Param(param string) ParamValue {
@@ -118,20 +139,20 @@ type Router struct {
 	Pool   *sync.Pool
 }
 
-func NewRouter() *Router {
+func NewRouter(logger *zap.Logger) *Router {
 	return &Router{
 		Routes: make([]*Route, 0),
 		Node:   nil,
 		Pool: &sync.Pool{
-			New: func() interface{} { return &Lib{} },
+			New: func() interface{} { return &Lib{logger: logger} },
 		},
 	}
 }
 
 func (r *Router) Get(name, path string, h Handler) {
-	params, fPath := validatePath(path)
-	fmt.Println("validatePath", params, fPath)
-	r1 := NewRoute(name, path, fPath, http.MethodGet, h, params)
+	params, formattedPath := validatePath(path)
+	fmt.Println("validatePath", params, formattedPath)
+	r1 := NewRoute(name, path, formattedPath, http.MethodGet, h, params)
 	r.Node = insert(r.Node, r1)
 }
 
@@ -171,15 +192,17 @@ func setParams(params []string, values []string) []*Param {
 
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("request path", r.URL.Path)
-	if isReqPathValid(r.URL.Path) {
+	formattedPath, params, valid := formatReqPath(r.URL.Path)
+	if valid {
 		fmt.Println("valid request url", r.URL.Path)
-		fPath, pParams := formatRequestPath(r.URL.Path)
-		route := findNode(router.Node, fPath)
+		// fPath, pParams := formatRequestPath(r.URL.Path)
+		route := findNode(router.Node, formattedPath)
 		fmt.Println("findNode", route)
-		if route != nil && isMatch(route.RawPath, fPath) {
-			ep := setParams(route.params, pParams)
+		if route != nil && isMatch(route.RawPath, formattedPath) {
+			ep := setParams(route.params, params)
 			lib := router.Pool.Get().(*Lib)
-			lib.set(w, r, ep)
+			logger := lib.logger.With(zap.String("path", r.URL.Path))
+			lib.set(w, r, logger, ep)
 			route.Handler(lib)
 			lib.reset()
 			router.Pool.Put(lib)
