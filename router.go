@@ -123,24 +123,35 @@ type param struct {
 	name string
 	pos  int
 }
-type Route struct {
-	Name    string
-	Path    string
-	RawPath string
-	Method  string
-	Handler Handler
+type route struct {
+	path    string
+	rawPath string
+	method  string
+	handler Handler
 	params  []string
 	encoded int
 }
-type Router struct {
-	Routes []*Route
+
+func newRoute(path, rawPath, method string, h Handler, params []string, encoded int) *route {
+	return &route{
+		path:    path,
+		rawPath: rawPath,
+		method:  method,
+		handler: h,
+		params:  params,
+		encoded: encoded,
+	}
+}
+
+type router struct {
+	Routes []*route
 	Node   *node
 	Pool   *sync.Pool
 }
 
-func NewRouter() *Router {
-	return &Router{
-		Routes: make([]*Route, 0),
+func newRouter() *router {
+	return &router{
+		Routes: make([]*route, 0),
 		Node:   nil,
 		Pool: &sync.Pool{
 			New: func() interface{} { return &Lib{} },
@@ -148,14 +159,14 @@ func NewRouter() *Router {
 	}
 }
 
-func (r *Router) Get(name, path string, h Handler) {
+func (r *router) Get(name, path string, h Handler) {
 	params, formattedPath, encoded := validatePath(path)
 	fmt.Println("validatePath", params, formattedPath)
-	r1 := NewRoute(name, path, formattedPath, http.MethodGet, h, params, encoded)
+	r1 := newRoute(path, formattedPath, http.MethodGet, h, params, encoded)
 	r.Node = insert(r.Node, r1)
 }
 
-func (r *Route) Param(name string) int {
+func (r *route) Param(name string) int {
 	// return findParam(r.params, name)
 	return 0
 }
@@ -163,18 +174,6 @@ func (r *Route) Param(name string) int {
 type Param struct {
 	Name  string
 	Value string
-}
-
-func NewRoute(name, path, rawPath, method string, h Handler, params []string, encoded int) *Route {
-	return &Route{
-		Name:    name,
-		Path:    path,
-		RawPath: rawPath,
-		Method:  method,
-		Handler: h,
-		params:  params,
-		encoded: encoded,
-	}
 }
 
 func setParams(params []string, values []string) []*Param {
@@ -190,7 +189,7 @@ func setParams(params []string, values []string) []*Param {
 	return rp
 }
 
-func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (router *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("request path", r.URL.Path)
 	formattedPath, params, encoded, valid := formatReqPath(r.URL.Path)
 	if valid {

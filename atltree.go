@@ -1,7 +1,5 @@
 package sinister
 
-import "fmt"
-
 func max(a, b int) int {
 	if a > b {
 		return a
@@ -49,18 +47,15 @@ func leftRotate(n *node) *node {
 	return y
 }
 func insert(n *node, data *Route) *node {
-	if len(data.RawPath) == 0 {
+	if data.encoded == 0 {
 		panic("invalid route")
 	}
 	if n == nil {
-		fmt.Println("was nil", data)
 		n = newNode(data)
 		// } else if (data.RawPath[0] < n.data.RawPath[0]) && (data.RawPath != n.data.RawPath) {
 	} else if data.encoded < n.data.encoded {
-		fmt.Println("left", data)
 		n.left = insert(n.left, data)
 	} else if data.encoded > n.data.encoded {
-		fmt.Println("right", data)
 		n.right = insert(n.right, data)
 	}
 	n.height = max(height(n.left), height(n.right)) + 1
