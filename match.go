@@ -11,6 +11,14 @@ const (
 	whitespace         = 0x20
 )
 
+func encodePath(text string) int {
+	r := 0
+	for i, c := range text {
+		r += (i ^ i*int(c) + i)
+	}
+	return r
+}
+
 func isMatch(a, b string) bool {
 	return a == b
 }
@@ -47,7 +55,7 @@ func isMainPath(path string) bool {
 	return false
 }
 
-func validatePath(path string) ([]string, string) {
+func validatePath(path string) ([]string, string, int) {
 	if !(len(path) > 0 && path[0] == slash) {
 		panic("invalid path")
 	}
@@ -107,7 +115,7 @@ func validatePath(path string) ([]string, string) {
 	if nPath.Len() == 0 {
 		nPath.WriteString(path)
 	}
-	return params, nPath.String()
+	return params, nPath.String(), encodePath(nPath.String())
 }
 
 // func stripLastSlash(path string) string {
@@ -145,12 +153,12 @@ func validatePath(path string) ([]string, string) {
 // 	return f.String(), p
 // }
 
-func formatReqPath(path string) (string, []string, bool) {
+func formatReqPath(path string) (string, []string, int, bool) {
 	if len(path) == 0 || len(path) > 0 && path[0] != slash {
-		return "", []string{}, false
+		return "", []string{}, 0, false
 	}
 	if isMainPath(path) {
-		return path, []string{}, true
+		return path, []string{}, 0, true
 	}
 	digit := 0
 	found := false
@@ -162,7 +170,7 @@ func formatReqPath(path string) (string, []string, bool) {
 		if isRuneValidV2(c) {
 			if c == slash {
 				if c == slash && i-slashIndex == 1 {
-					return "", []string{}, false
+					return "", []string{}, 0, false
 				}
 				slashIndex = i
 			}
@@ -188,7 +196,7 @@ func formatReqPath(path string) (string, []string, bool) {
 				found = false
 			}
 		} else {
-			return "", []string{}, false
+			return "", []string{}, 0, false
 		}
 	}
 	if r.Len() == 0 {
@@ -198,7 +206,7 @@ func formatReqPath(path string) (string, []string, bool) {
 	if rs[len(rs)-1] == slash {
 		rs = r.String()[:r.Len()-1]
 	}
-	return rs, p, true
+	return rs, p, encodePath(rs), true
 }
 
 // func isReqPathValid(path string) bool {

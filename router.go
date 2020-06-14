@@ -69,17 +69,15 @@ func (l *Lib) JSONv2(code int, data interface{}) {
 	}
 }
 
-func (l *Lib) set(w http.ResponseWriter, r *http.Request, logger *zap.Logger, params []*Param) {
+func (l *Lib) set(w http.ResponseWriter, r *http.Request, params []*Param) {
 	l.w = w
 	l.r = r
-	l.logger = logger
 	l.params = params
 }
 
 func (l *Lib) reset() {
 	l.w = nil
 	l.r = nil
-	l.logger = nil
 	l.params = nil
 }
 func (l *Lib) Query(key string) string {
@@ -139,12 +137,12 @@ type Router struct {
 	Pool   *sync.Pool
 }
 
-func NewRouter(logger *zap.Logger) *Router {
+func NewRouter() *Router {
 	return &Router{
 		Routes: make([]*Route, 0),
 		Node:   nil,
 		Pool: &sync.Pool{
-			New: func() interface{} { return &Lib{logger: logger} },
+			New: func() interface{} { return &Lib{} },
 		},
 	}
 }
@@ -201,8 +199,8 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if route != nil && isMatch(route.RawPath, formattedPath) {
 			ep := setParams(route.params, params)
 			lib := router.Pool.Get().(*Lib)
-			logger := lib.logger.With(zap.String("path", r.URL.Path))
-			lib.set(w, r, logger, ep)
+			// logger := lib.logger.With(zap.String("path", r.URL.Path))
+			lib.set(w, r, ep)
 			route.Handler(lib)
 			lib.reset()
 			router.Pool.Put(lib)
