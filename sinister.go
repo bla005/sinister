@@ -114,6 +114,7 @@ func New() *Sinister {
 		logger:      newLogger(),
 		router:      newRouter(),
 		middlewares: make([]*Middleware, 0),
+		server:      &http.Server{},
 	}
 }
 
