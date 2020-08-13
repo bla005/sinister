@@ -107,6 +107,6 @@ func (router *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			router.NotFoundHandler(lib)
 		}
 		router.pool.Put(lib)
-		return
+		fmt.Println("ok")
 	}
 }

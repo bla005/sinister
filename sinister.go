@@ -9,18 +9,13 @@ import (
 )
 
 const (
-	// GET ...
-	GET = http.MethodGet
-	// POST ...
-	POST = http.MethodPost
-	// PUT ...
-	PUT = http.MethodPut
-	// DELETE ...
+	GET    = http.MethodGet
+	POST   = http.MethodPost
+	PUT    = http.MethodPut
 	DELETE = http.MethodDelete
 )
 
 var (
-	// ErrQueryNotFound ...
 	ErrQueryNotFound error
 )
 
@@ -32,43 +27,26 @@ const (
 type MIME string
 
 const (
-	// ApplicationJSON ...
-	ApplicationJSON MIME = "application/json"
-	// ApplicationJavascript ...
+	ApplicationJSON       MIME = "application/json"
 	ApplicationJavascript MIME = "application/javascript"
-	// ApplicationXML ...
-	ApplicationXML MIME = "application/xml"
-	// TextXML ...
-	TextXML MIME = "text/xml"
-	// ApplicationForm ...
-	ApplicationForm MIME = "application/x-www-form-urlencoded"
-	// ApplicationProtobuf ...
-	ApplicationProtobuf MIME = "application/protobuf"
-	// ApplicationMsgpack ...
-	ApplicationMsgpack MIME = "application/msgpack"
-	// TextHTML ...
-	TextHTML MIME = "text/html"
-	// TextPlain ...
-	TextPlain MIME = "text/plain"
-	// MultipartForm ...
-	MultipartForm MIME = "multipart/form-data"
-	// OctetStream ...
-	OctetStream MIME = "application/octet-stream"
+	ApplicationXML        MIME = "application/xml"
+	TextXML               MIME = "text/xml"
+	ApplicationForm       MIME = "application/x-www-form-urlencoded"
+	ApplicationProtobuf   MIME = "application/protobuf"
+	ApplicationMsgpack    MIME = "application/msgpack"
+	TextHTML              MIME = "text/html"
+	TextPlain             MIME = "text/plain"
+	MultipartForm         MIME = "multipart/form-data"
+	OctetStream           MIME = "application/octet-stream"
 )
 
 const (
-	// ApplicationJSONCharsetUTF8 ...
-	ApplicationJSONCharsetUTF8 MIME = ApplicationJSON + "; " + charsetUTF8
-	// ApplicationJavascriptCharsetUTF8 ...
+	ApplicationJSONCharsetUTF8       MIME = ApplicationJSON + "; " + charsetUTF8
 	ApplicationJavascriptCharsetUTF8 MIME = ApplicationJavascript + "; " + charsetUTF8
-	// ApplicationXMLCharsetUTF8 ...
-	ApplicationXMLCharsetUTF8 MIME = ApplicationXML + "; " + charsetUTF8
-	// TextXMLCharsetUTF8 ...
-	TextXMLCharsetUTF8 MIME = TextXML + "; " + charsetUTF8
-	// TextHTMLCharsetUTF8 ...
-	TextHTMLCharsetUTF8 MIME = TextHTML + "; " + charsetUTF8
-	// TextPlainCharsetUTF8 ...
-	TextPlainCharsetUTF8 MIME = TextPlain + "; " + charsetUTF8
+	ApplicationXMLCharsetUTF8        MIME = ApplicationXML + "; " + charsetUTF8
+	TextXMLCharsetUTF8               MIME = TextXML + "; " + charsetUTF8
+	TextHTMLCharsetUTF8              MIME = TextHTML + "; " + charsetUTF8
+	TextPlainCharsetUTF8             MIME = TextPlain + "; " + charsetUTF8
 )
 
 // Sinister ...
@@ -79,7 +57,6 @@ type Sinister struct {
 	server      *http.Server
 }
 
-// Middleware ...
 type Middleware func(*HC) *HC
 
 func (s *Sinister) register(path, method string, h Handler) {
@@ -88,27 +65,22 @@ func (s *Sinister) register(path, method string, h Handler) {
 	s.router.node = insert(s.router.node, r1)
 }
 
-// GET ...
 func (s *Sinister) GET(path string, h Handler) {
 	s.register(path, GET, h)
 }
 
-// POST ...
 func (s *Sinister) POST(path string, h Handler) {
 	s.register(path, POST, h)
 }
 
-// PUT ...
 func (s *Sinister) PUT(path string, h Handler) {
 	s.register(path, PUT, h)
 }
 
-// DELETE ...
 func (s *Sinister) DELETE(path string, h Handler) {
 	s.register(path, DELETE, h)
 }
 
-// New ...
 func New() *Sinister {
 	return &Sinister{
 		logger:      newLogger(),
@@ -118,7 +90,6 @@ func New() *Sinister {
 	}
 }
 
-// Start ...
 func (s *Sinister) Start(addr string) error {
 	// if err := http.ListenAndServe(":8080", s.router); err != nil {
 	// log.Fatal(err)
@@ -131,17 +102,14 @@ func (s *Sinister) Start(addr string) error {
 	return s.server.Serve(l)
 }
 
-// Close ...
 func (s *Sinister) Close() error {
 	return s.server.Close()
 }
 
-// UseMiddleware ...
 func (s *Sinister) UseMiddleware(m *Middleware) {
 	s.middlewares = append(s.middlewares, m)
 }
 
-// HTTPResponse ...
 type HTTPResponse struct {
 	Code    int         `json:"code"`
 	Message interface{} `json:"msg"`
