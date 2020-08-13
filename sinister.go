@@ -82,9 +82,10 @@ func (s *Sinister) DELETE(path string, h Handler) {
 }
 
 func New() *Sinister {
+	l := newLogger()
 	return &Sinister{
-		logger:      newLogger(),
-		router:      newRouter(),
+		logger:      l,
+		router:      newRouter(l),
 		middlewares: make([]*Middleware, 0),
 		server:      &http.Server{},
 	}

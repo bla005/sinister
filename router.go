@@ -21,6 +21,14 @@ type router struct {
 	node            *node
 	pool            *sync.Pool
 	NotFoundHandler Handler
+	logger          *zap.Logger
+}
+
+func (r *router) setNotFoundHandler() {
+	r.NotFoundHandler = func(ctx *HC) {
+		ctx.MIME(ApplicationJSON)
+		ctx.JSONS(404, "Not found")
+	}
 }
 
 /*
@@ -36,7 +44,7 @@ func newPrefix(pref string) *prefix {
 	}
 }
 */
-func newRouter() *router {
+func newRouter(logger *zap.Logger) *router {
 	return &router{
 		routes: nil,
 		//prefixes: make([]*prefix, 0),
@@ -44,6 +52,7 @@ func newRouter() *router {
 		pool: &sync.Pool{
 			New: func() interface{} { return newHC() },
 		},
+		logger: logger,
 	}
 }
 
@@ -94,18 +103,18 @@ func (router *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(formattedPath, params, valid)
 	if valid {
 		route := findNode(router.node, formattedPath)
-		ctxLogger, _ := zap.NewProduction()
+		// ctxLogger, _ := zap.NewProduction()
+		nLog := router.logger
 		lib := router.pool.Get().(*HC)
 		lib.reset()
 		if route != nil && isMatch(route.rawPath, formattedPath) {
 			fmt.Println("is match")
 			urlParams := setParams(route.params, params)
-			lib.set(w, r, ctxLogger, urlParams)
+			lib.set(w, r, nLog, urlParams)
 			route.handler(lib)
-		} else {
-			lib.set(w, r, ctxLogger, nil)
-			router.NotFoundHandler(lib)
 		}
+		lib.set(w, r, nLog, nil)
+		router.NotFoundHandler(lib)
 		router.pool.Put(lib)
 		fmt.Println("ok")
 	}
