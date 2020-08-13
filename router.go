@@ -90,6 +90,8 @@ func setParams(params []string, values []string) []*Param {
 // ServeHTTP ...
 func (router *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	formattedPath, params, valid := validateRequestPath(r.URL.Path, r.Method)
+	fmt.Println("serve")
+	fmt.Println(formattedPath, params, valid)
 	if valid {
 		route := findNode(router.node, formattedPath)
 		ctxLogger, _ := zap.NewProduction()
