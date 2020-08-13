@@ -112,10 +112,10 @@ func (router *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			urlParams := setParams(route.params, params)
 			lib.set(w, r, nLog, urlParams)
 			route.handler(lib)
-			return
+		} else {
+			lib.set(w, r, nLog, nil)
+			router.NotFoundHandler(lib)
 		}
-		lib.set(w, r, nLog, nil)
-		router.NotFoundHandler(lib)
 		router.pool.Put(lib)
 		fmt.Println("ok")
 	}
