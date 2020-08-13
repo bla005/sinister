@@ -10,13 +10,13 @@ func max(a, b int) int {
 }
 
 type node struct {
-	data   *Route
+	data   *route
 	left   *node
 	right  *node
 	height int
 }
 
-func newNode(data *Route) *node {
+func newNode(data *route) *node {
 	return &node{
 		data:   data,
 		left:   nil,
@@ -46,32 +46,41 @@ func leftRotate(n *node) *node {
 	y.height = max(height(y.left), height(y.right)) + 1
 	return y
 }
-func insert(n *node, data *Route) *node {
-	if data.encoded == 0 {
-		panic("invalid route")
+func insert(n *node, data *route) *node {
+	// if data.rawPath == "" && n.data.rawPath != data.rawPath {
+	if data.rawPath == "" {
+		panic("sinister: empty route")
 	}
+
+	if findNode(n, data.rawPath) != nil {
+		panic("sinister: path already exists")
+	}
+	/*
+		if data.rawPath == "" || n.data.rawPath == data.rawPath {
+			panic("invalid route")
+		}
+	*/
 	if n == nil {
 		n = newNode(data)
-		// } else if (data.RawPath[0] < n.data.RawPath[0]) && (data.RawPath != n.data.RawPath) {
-	} else if data.encoded < n.data.encoded {
+	} else if data.rawPath < n.data.rawPath {
 		n.left = insert(n.left, data)
-	} else if data.encoded > n.data.encoded {
+	} else if data.rawPath > n.data.rawPath {
 		n.right = insert(n.right, data)
 	}
 	n.height = max(height(n.left), height(n.right)) + 1
 	balance := getBalance(n)
 
-	if balance > 1 && data.encoded < n.left.data.encoded {
+	if balance > 1 && data.rawPath < n.left.data.rawPath {
 		return rightRotate(n)
 	}
-	if balance < -1 && data.encoded > n.right.data.encoded {
+	if balance < -1 && data.rawPath > n.right.data.rawPath {
 		return leftRotate(n)
 	}
-	if balance > 1 && data.encoded > n.left.data.encoded {
+	if balance > 1 && data.rawPath > n.left.data.rawPath {
 		n.left = leftRotate(n.left)
 		return rightRotate(n)
 	}
-	if balance < -1 && data.encoded > n.right.data.encoded {
+	if balance < -1 && data.rawPath > n.right.data.rawPath {
 		n.right = rightRotate(n.right)
 		return leftRotate(n)
 	}
@@ -106,13 +115,13 @@ func getBalance(n *node) int {
 	return height(n.left) - height(n.right)
 }
 
-func findNode(n *node, target int) *Route {
+func findNode(n *node, target string) *route {
 	if n == nil {
 		return nil
 	}
-	if n.data.encoded == target {
+	if n.data.rawPath == target {
 		return n.data
-	} else if target < n.data.encoded {
+	} else if target < n.data.rawPath {
 		return findNode(n.left, target)
 	} else {
 		return findNode(n.right, target)

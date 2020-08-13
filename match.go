@@ -1,6 +1,7 @@
 package sinister
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -11,16 +12,15 @@ const (
 	whitespace         = 0x20
 )
 
-func encodePath(text string) int {
-	r := 0
-	for i, c := range text {
-		r += (i ^ i*int(c) + i)
-	}
-	return r
-}
-
 func isMatch(a, b string) bool {
 	return a == b
+}
+
+func isAZ(c rune) bool {
+	if c >= 0x61 && c <= 0x7a {
+		return true
+	}
+	return false
 }
 
 func isNumeric(n rune) bool {
@@ -30,14 +30,8 @@ func isNumeric(n rune) bool {
 	return false
 }
 
-func isAZ(c rune) bool {
-	if c >= 0x61 && c <= 0x7a {
-		return true
-	}
-	return false
-}
 func isRuneValid(c rune) bool {
-	if c == leftSquareBracket || c == rightSquareBracket || c == slash || isAZ(c) {
+	if c == leftSquareBracket || c == rightSquareBracket || c == slash || isAZ(c) || isNumeric(c) {
 		return true
 	}
 	return false
@@ -55,10 +49,14 @@ func isMainPath(path string) bool {
 	return false
 }
 
-func validatePath(path string) ([]string, string, int) {
-	if !(len(path) > 0 && path[0] == slash) {
-		panic("invalid path")
+func validatePath(path, method string) ([]string, string) {
+	if len(path) == 0 {
+		panic("invalid path: too short")
 	}
+	if path[0] != slash {
+		panic("invalid path: has to start with a slash")
+	}
+
 	l := 0
 	r := 0
 	o := false
@@ -88,8 +86,8 @@ func validatePath(path string) ([]string, string, int) {
 					n = i + 1
 					r = i
 					params = append(params, path[l+1:r])
-					l = 0
-					r = 0
+					// l = 0
+					// r = 0
 					o = false
 				case i == len(path)-1:
 					panic("invalid path: closing bracket not found")
@@ -105,6 +103,8 @@ func validatePath(path string) ([]string, string, int) {
 					nPath.WriteString(path[n:i])
 				case c == rightSquareBracket:
 					panic("invalid path: opening bracket is missing")
+				case r > 0 && i-r == 1 && c != slash:
+					panic("smth wrong")
 				}
 			}
 		} else {
@@ -115,50 +115,19 @@ func validatePath(path string) ([]string, string, int) {
 	if nPath.Len() == 0 {
 		nPath.WriteString(path)
 	}
-	return params, nPath.String(), encodePath(nPath.String())
+	return params, fmt.Sprintf("%s_%s", nPath.String(), method)
 }
 
-// func stripLastSlash(path string) string {
-// 	if !isMainPath(path) {
-// 		if path[len(path)-1] == 47 {
-// 			return path[:len(path)-1]
-// 		}
-// 	}
-// 	return path
-// }
-//
-// func formatRequestPath(path string) (string, []string) {
-// 	if isMainPath(path) {
-// 		return path, []string{}
-// 	}
-// 	var p []string
-// 	var f strings.Builder
-// 	if len(path) > 0 {
-// 		if path[len(path)-1] == slash {
-// 			path = path[:len(path)-1]
-// 		}
-// 		if path[0] == slash {
-// 			path = path[1:]
-// 		}
-// 		s := strings.Split(path, "/")
-// 		for i, w := range s {
-// 			if isNumeric(rune(w[0])) {
-// 				p = append(p, w)
-// 				s[i] = "#"
-// 			}
-// 		}
-// 		f.WriteString("/")
-// 		f.WriteString(strings.Join(s, "/"))
-// 	}
-// 	return f.String(), p
-// }
-
-func formatReqPath(path string) (string, []string, int, bool) {
-	if len(path) == 0 || len(path) > 0 && path[0] != slash {
-		return "", []string{}, 0, false
+func validateRequestPath(path, method string) (string, []string, bool) {
+	if len(path) == 0 {
+		return "", []string{}, false
 	}
+	if path[0] != slash {
+		return "", []string{}, false
+	}
+
 	if isMainPath(path) {
-		return path, []string{}, 0, true
+		return path, []string{}, true
 	}
 	digit := 0
 	found := false
@@ -170,7 +139,7 @@ func formatReqPath(path string) (string, []string, int, bool) {
 		if isRuneValidV2(c) {
 			if c == slash {
 				if c == slash && i-slashIndex == 1 {
-					return "", []string{}, 0, false
+					return "", []string{}, false
 				}
 				slashIndex = i
 			}
@@ -196,7 +165,7 @@ func formatReqPath(path string) (string, []string, int, bool) {
 				found = false
 			}
 		} else {
-			return "", []string{}, 0, false
+			return "", []string{}, false
 		}
 	}
 	if r.Len() == 0 {
@@ -206,18 +175,5 @@ func formatReqPath(path string) (string, []string, int, bool) {
 	if rs[len(rs)-1] == slash {
 		rs = r.String()[:r.Len()-1]
 	}
-	return rs, p, encodePath(rs), true
+	return fmt.Sprintf("%s_%s", rs, method), p, true
 }
-
-// func isReqPathValid(path string) bool {
-// 	if len(path) == 0 {
-// 		return false
-// 	}
-// 	for _, c := range path {
-// 		// if !((c >= 97 && c <= 122) || c == 47 || c >= 48 && c <= 57) {
-// 		if isAZ(c) || isNumeric(c) || c == slash {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
