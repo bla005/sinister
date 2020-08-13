@@ -2,6 +2,7 @@ package sinister
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -95,13 +96,15 @@ func (router *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		lib := router.pool.Get().(*HC)
 		lib.reset()
 		if route != nil && isMatch(route.rawPath, formattedPath) {
+			fmt.Println("is match")
 			urlParams := setParams(route.params, params)
 			lib.set(w, r, ctxLogger, urlParams)
 			route.handler(lib)
-			return
+		} else {
+			lib.set(w, r, ctxLogger, nil)
+			router.NotFoundHandler(lib)
 		}
-		lib.set(w, r, ctxLogger, nil)
-		router.NotFoundHandler(lib)
 		router.pool.Put(lib)
+		return
 	}
 }
