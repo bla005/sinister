@@ -104,7 +104,7 @@ func (router *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if valid {
 		route := findNode(router.node, formattedPath)
 		// ctxLogger, _ := zap.NewProduction()
-		nLog := router.logger
+		nLog := router.logger.With(zap.String("plm", "test"))
 		lib := router.pool.Get().(*HC)
 		lib.reset()
 		if route != nil && isMatch(route.rawPath, formattedPath) {
@@ -112,6 +112,7 @@ func (router *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			urlParams := setParams(route.params, params)
 			lib.set(w, r, nLog, urlParams)
 			route.handler(lib)
+			return
 		}
 		lib.set(w, r, nLog, nil)
 		router.NotFoundHandler(lib)
