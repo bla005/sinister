@@ -95,6 +95,7 @@ func (s *Sinister) Start(addr string) error {
 	// if err := http.ListenAndServe(":8080", s.router); err != nil {
 	// log.Fatal(err)
 	// }
+	s.router.setNotFoundHandler()
 	s.server.Handler = s.router
 	l, err := newListener(addr)
 	if err != nil {
